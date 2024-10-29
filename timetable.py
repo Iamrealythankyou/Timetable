@@ -33,6 +33,32 @@ def update_event(events_dir: list[dict], originalweek: str, originalwhen: str, w
     return add_event(deleted_events, target_event['week'], target_event['when'], target_event['where'], target_event['detail'])
 
 
+def legal_checker(week: str, when: str) -> bool:
+    flag = True
+    legal_week = []
+    for n in range(1, 8):
+        legal_week.append("week"+str(n))
+    flag = False if week not in legal_week else flag
+    if flag == True:
+        flag = False if when.count(",") != 1 or when.count(
+            ":") != 2 or when.count(".") != 0 else flag
+    if flag == True:
+        flag = False if when[2] != ":" and when[5] != "," and when[8] != ":" else flag
+    first_num = second_num = third_num = fourth_num = ""
+    if flag == True:
+        first_num = when.split(",")[0].split(":")[0]
+        second_num = when.split(",")[0].split(":")[1]
+        third_num = when.split(",")[1].split(":")[0]
+        fourth_num = when.split(",")[1].split(":")[1]
+        flag = False if (
+            first_num).isnumeric == False or third_num.isnumeric == False or second_num.isnumeric == False or fourth_num.isnumeric == False else flag
+    if flag == True:
+        flag = False if int(first_num) > 24 or int(first_num) < 0 or int(
+            second_num) > 60 or int(second_num) < 0 or int(fourth_num) > 60 or int(fourth_num) < 0 or (int(week[4])-1)*1440 + get_minits(when)[0]+get_minits(when)[1] > 10080 else flag
+
+    return flag
+
+
 def add_event(events_dir: list[dict], week: str, when: str, where: str, detail: str | None = None) -> list[dict]:
     input_list = [week, when, where, detail]
     item = {}
@@ -42,30 +68,34 @@ def add_event(events_dir: list[dict], week: str, when: str, where: str, detail: 
     check_week = week
     check_when = when
     flag = legal_checker(check_week, check_when)
+    is_overlap = False
     while (flag != True):
         input_str = input(
-            "Please, input event time again, existing overlap in event time")
+            "Please, input event time again, invalid input")
         input_list = [n for n in input_str.replace('\n', "").split(';')]
         if len(input_list) != 3 or len(input_list) != 4:
             flag = False
         flag = legal_checker(input_list[0], input_list[1])
-    for n in search_event(events_dir, input_list[0], input_list[1].split(',')[0]):
-        if (get_minits(input_list[1])[0] > get_minits(n['when'])[0] and (get_minits(input_list[1])[0] < get_minits(n["when"])[0]+get_minits(n['when'])[1])) or ((get_minits(input_list[1])[0] < get_minits(n['when'])[0]) and get_minits(n['when'])[0] < get_minits(input_list[1])[0]+get_minits(input_list[1])[1]):
-            iner_flag = False
-            input_str = input(
-                "Please, inpusssssst event time again, existing overlap in event time")
-            input_list = [n for n in input_str.replace(
-                '\n', "").split(';')]
-    if iner_flag == True:
-        prepare_append = test(
-            int(input_list[0][4:5]), input_list[1], input_list[2], input_list[3])
-        for y in prepare_append:
-            # print(y)
-            # for x in range(0, 4):
-            #    item.update({list(events_dir[0].keys())[
-            #                x]: list(y.values())[x]})
-            events_dir.append(y)
-        flag = False
+    while (is_overlap != True):
+        is_overlap = False if len(search_event(
+            events_dir, input_list[0], input_list[1].split(',')[0])) != 0 else is_overlap
+        for n in search_event(events_dir, input_list[0]):
+            if (get_minits(input_list[1])[0] > get_minits(n['when'])[0] and (get_minits(input_list[1])[0] < get_minits(n["when"])[0]+get_minits(n['when'])[1])) or ((get_minits(input_list[1])[0] < get_minits(n['when'])[0]) and get_minits(n['when'])[0] < get_minits(input_list[1])[0]+get_minits(input_list[1])[1]):
+                iner_flag = False
+                input_str = input(
+                    "Please, input event time again, existing overlap in event time")
+                input_list = [n for n in input_str.replace(
+                    '\n', "").split(';')]
+        if iner_flag == True:
+            prepare_append = test(
+                int(input_list[0][4:5]), input_list[1], input_list[2], input_list[3])
+            for y in prepare_append:
+                # print(y)
+                # for x in range(0, 4):
+                #    item.update({list(events_dir[0].keys())[
+                #                x]: list(y.values())[x]})
+                events_dir.append(y)
+            is_overlap = True
     return events_dir
 
 
@@ -379,12 +409,12 @@ test_dir7 = {'week': 'week7', 'when': '11:59,00:20',
 test_list = [test_dir1, test_dir2, test_dir3,
              test_dir4, test_dir5, test_dir6, test_dir7, test_dir8, test_dir9, test_dir10, test_dir11, test_dir12]
 # print(search_event(test_list, "week1", "11:29"))
-test_list1 = [test_dir1, test_dir2, test_dir3, test_dir4, test_dir5]
+test_list1 = [test_dir1, test_dir2]
 test_dir13 = {'week': 'week3', 'when': '01:59',
               'where': 'Home', 'detail': 'Rush B'}
 
-printer(test_list1)
-# print(add_event(test_list1, "week1", "11:49,00:35", "Home", "Rush B"))
+# printer(test_list1)
+printer(add_event(test_list1, "week1", "21:49,00:35", "Home", "Rush B"))
 # print(get_information(search_event(test_list, "week1"), 3, False))
 # printer(add_event(test_list1, "week3", "23:55,48:30",
 #                  "Groge street", "Playing computer games"))
@@ -393,31 +423,6 @@ printer(test_list1)
 # print(search_event(test_list1, "week1", "11:29"))
 
 
-def legal_checker(week: str, when: str) -> bool:
-    flag = True
-    legal_week = []
-    for n in range(1, 8):
-        legal_week.append("week"+str(n))
-    flag = False if week not in legal_week else flag
-    if flag == True:
-        flag = False if when.count(",") != 1 or when.count(
-            ":") != 2 or when.count(".") != 0 else flag
-    if flag == True:
-        flag = False if when[2] != ":" and when[5] != "," and when[8] != ":" else flag
-    first_num = second_num = third_num = fourth_num = ""
-    if flag == True:
-        first_num = when.split(",")[0].split(":")[0]
-        second_num = when.split(",")[0].split(":")[1]
-        third_num = when.split(",")[1].split(":")[0]
-        fourth_num = when.split(",")[1].split(":")[1]
-        flag = False if (
-            first_num).isnumeric == False or third_num.isnumeric == False or second_num.isnumeric == False or fourth_num.isnumeric == False else flag
-    if flag == True:
-        flag = False if int(first_num) > 24 or int(first_num) < 0 or int(
-            second_num) > 60 or int(second_num) < 0 or int(fourth_num) > 60 or int(fourth_num) < 0 or (int(week[4])-1)*1440 + get_minits(when)[0]+get_minits(when)[1] > 10080 else flag
-
-    return flag
-
-
-print(legal_checker("week1", "20:30,20:10"))
+# printer(add_event(test_list1, "week1", "11:49,00:35", "Home", "Rush B"))
+# print(legal_checker("week1", "20:30,20:10"))
 # def main() -> None:
