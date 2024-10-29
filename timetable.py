@@ -39,28 +39,33 @@ def add_event(events_dir: list[dict], week: str, when: str, where: str, detail: 
     flag: bool = True
     iner_flag: bool = True
     # exist overlap
-    while (flag):
-        while (len(search_event(events_dir, input_list[0], input_list[1].split(',')[0])) != 0):
-            input_str = input(
-                "Please, input event time again, existing overlap in event time")
-            input_list = [n for n in input_str.replace('\n', "").split(';')]
-        for n in search_event(events_dir, input_list[0], input_list[1].split(',')[0]):
-            if (get_minits(input_list[1])[0] > get_minits(n['when'])[0] and (get_minits(input_list[1])[0] < get_minits(n["when"])[0]+get_minits(n['when'])[1])) or ((get_minits(input_list[1])[0] < get_minits(n['when'])[0]) and get_minits(n['when'])[0] < get_minits(input_list[1])[0]+get_minits(input_list[1])[1]):
-                iner_flag = False
-                input_str = input(
-                    "Please, inpusssssst event time again, existing overlap in event time")
-                input_list = [n for n in input_str.replace(
-                    '\n', "").split(';')]
-        if iner_flag == True:
-            prepare_append = test(
-                int(input_list[0][4:5]), input_list[1], input_list[2], input_list[3])
-            for y in prepare_append:
-                # print(y)
-                # for x in range(0, 4):
-                #    item.update({list(events_dir[0].keys())[
-                #                x]: list(y.values())[x]})
-                events_dir.append(y)
+    check_week = week
+    check_when = when
+    flag = legal_checker(check_week, check_when)
+    while (flag != True):
+        input_str = input(
+            "Please, input event time again, existing overlap in event time")
+        input_list = [n for n in input_str.replace('\n', "").split(';')]
+        if len(input_list) != 3 or len(input_list) != 4:
             flag = False
+        flag = legal_checker(input_list[0], input_list[1])
+    for n in search_event(events_dir, input_list[0], input_list[1].split(',')[0]):
+        if (get_minits(input_list[1])[0] > get_minits(n['when'])[0] and (get_minits(input_list[1])[0] < get_minits(n["when"])[0]+get_minits(n['when'])[1])) or ((get_minits(input_list[1])[0] < get_minits(n['when'])[0]) and get_minits(n['when'])[0] < get_minits(input_list[1])[0]+get_minits(input_list[1])[1]):
+            iner_flag = False
+            input_str = input(
+                "Please, inpusssssst event time again, existing overlap in event time")
+            input_list = [n for n in input_str.replace(
+                '\n', "").split(';')]
+    if iner_flag == True:
+        prepare_append = test(
+            int(input_list[0][4:5]), input_list[1], input_list[2], input_list[3])
+        for y in prepare_append:
+            # print(y)
+            # for x in range(0, 4):
+            #    item.update({list(events_dir[0].keys())[
+            #                x]: list(y.values())[x]})
+            events_dir.append(y)
+        flag = False
     return events_dir
 
 
@@ -378,7 +383,7 @@ test_list1 = [test_dir1, test_dir2, test_dir3, test_dir4, test_dir5]
 test_dir13 = {'week': 'week3', 'when': '01:59',
               'where': 'Home', 'detail': 'Rush B'}
 
-# printer(test_list1)
+printer(test_list1)
 # print(add_event(test_list1, "week1", "11:49,00:35", "Home", "Rush B"))
 # print(get_information(search_event(test_list, "week1"), 3, False))
 # printer(add_event(test_list1, "week3", "23:55,48:30",
