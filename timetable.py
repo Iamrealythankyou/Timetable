@@ -18,16 +18,16 @@ def update_event(events_dir: list[dict], originalweek: str, originalwhen: str, w
     for n in one_week_events_when:
         if originalwhen in n[0]:
             target_event = search_event(
-                events_dir, originalweek, originalwhen, n[0]+","+n[1])[0]
+                events_dir, originalweek, originalwhen)[0]
     deleted_events = delet_event(events_dir, originalweek, originalwhen)
     print(target_event)
     if week != None:
         target_event['week'] = week
-    elif when != None:
+    if when != None:
         target_event['when'] = when
-    elif where != None:
+    if where != None:
         target_event['where'] = where
-    elif detail != None:
+    if detail != None:
         target_event['detail'] = detail
     print(target_event)
     return add_event(deleted_events, target_event['week'], target_event['when'], target_event['where'], target_event['detail'])
@@ -52,6 +52,7 @@ def legal_checker(week: str, when: str) -> bool:
         fourth_num = when.split(",")[1].split(":")[1]
         flag = False if (
             first_num).isnumeric == False or third_num.isnumeric == False or second_num.isnumeric == False or fourth_num.isnumeric == False else flag
+
     if flag == True:
         flag = False if int(first_num) > 24 or int(first_num) < 0 or int(
             second_num) > 60 or int(second_num) < 0 or int(fourth_num) > 60 or int(fourth_num) < 0 or (int(week[4])-1)*1440 + get_minits(when)[0]+get_minits(when)[1] > 10080 else flag
@@ -71,31 +72,47 @@ def add_event(events_dir: list[dict], week: str, when: str, where: str, detail: 
     is_overlap = False
     while (flag != True):
         input_str = input(
-            "Please, input event time again, invalid input")
+            "Please, input event time again, invalid input:  ")
         input_list = [n for n in input_str.replace('\n', "").split(';')]
         if len(input_list) != 3 or len(input_list) != 4:
             flag = False
         flag = legal_checker(input_list[0], input_list[1])
+    n = -1
     while (is_overlap != True):
-        is_overlap = False if len(search_event(
-            events_dir, input_list[0], input_list[1].split(',')[0])) != 0 else is_overlap
-        for n in search_event(events_dir, input_list[0]):
-            if (get_minits(input_list[1])[0] > get_minits(n['when'])[0] and (get_minits(input_list[1])[0] < get_minits(n["when"])[0]+get_minits(n['when'])[1])) or ((get_minits(input_list[1])[0] < get_minits(n['when'])[0]) and get_minits(n['when'])[0] < get_minits(input_list[1])[0]+get_minits(input_list[1])[1]):
-                iner_flag = False
-                input_str = input(
-                    "Please, input event time again, existing overlap in event time")
-                input_list = [n for n in input_str.replace(
-                    '\n', "").split(';')]
-        if iner_flag == True:
-            prepare_append = test(
-                int(input_list[0][4:5]), input_list[1], input_list[2], input_list[3])
-            for y in prepare_append:
-                # print(y)
-                # for x in range(0, 4):
-                #    item.update({list(events_dir[0].keys())[
-                #                x]: list(y.values())[x]})
-                events_dir.append(y)
+        n += 1
+        currentevent_lis = (search_event(events_dir, input_list[0]))
+        if len(currentevent_lis) != 0:
+            currentevent = (search_event(events_dir, input_list[0]))[n]
+            current_event_starttime = get_minits(currentevent['when'])[0]
+            current_event_endtime = get_minits(currentevent['when'])[
+                1]+current_event_starttime
+            input_event_starttime = get_minits(input_list[1])[0]
+            input_event_endtime = get_minits(input_list[1])[
+                1]+input_event_starttime
+            if (input_event_starttime >= current_event_starttime and input_event_starttime <= current_event_endtime) or (input_event_endtime >= current_event_starttime and input_event_endtime <= current_event_endtime) or (input_event_starttime < current_event_starttime and input_event_endtime > current_event_endtime):
+                is_formate = False
+                while (is_formate == False):
+                    input_str = input(
+                        "Please, input event time again, existing overlap in event time:  ")
+                    input_list = [n for n in input_str.replace(
+                        '\n', "").split(';')]
+                    if len(input_list) >= 2:
+                        is_formate = legal_checker(
+                            input_list[0], input_list[1])
+                n = -1
+            if n+1 == len(search_event(events_dir, input_list[0])):
+                is_overlap = True
+        else:
             is_overlap = True
+    prepare_append = test(
+        int(input_list[0][4:5]), input_list[1], input_list[2], input_list[3])
+    for y in prepare_append:
+        # print(y)
+        # for x in range(0, 4):
+        #    item.update({list(events_dir[0].keys())[
+        #                x]: list(y.values())[x]})
+        events_dir.append(y)
+
     return events_dir
 
 
@@ -409,12 +426,12 @@ test_dir7 = {'week': 'week7', 'when': '11:59,00:20',
 test_list = [test_dir1, test_dir2, test_dir3,
              test_dir4, test_dir5, test_dir6, test_dir7, test_dir8, test_dir9, test_dir10, test_dir11, test_dir12]
 # print(search_event(test_list, "week1", "11:29"))
-test_list1 = [test_dir1, test_dir2]
+test_list1 = [test_dir1]
 test_dir13 = {'week': 'week3', 'when': '01:59',
               'where': 'Home', 'detail': 'Rush B'}
 
 # printer(test_list1)
-printer(add_event(test_list1, "week1", "21:49,00:35", "Home", "Rush B"))
+# print(add_event(test_list1, "week1", "11:49,00:35", "Home", "Rush B"))
 # print(get_information(search_event(test_list, "week1"), 3, False))
 # printer(add_event(test_list1, "week3", "23:55,48:30",
 #                  "Groge street", "Playing computer games"))
@@ -425,4 +442,46 @@ printer(add_event(test_list1, "week1", "21:49,00:35", "Home", "Rush B"))
 
 # printer(add_event(test_list1, "week1", "11:49,00:35", "Home", "Rush B"))
 # print(legal_checker("week1", "20:30,20:10"))
-# def main() -> None:
+def main() -> None:
+    events_lis = []
+    operation = input(
+        "A for add events;D for delete a events;U for update a event;S for search events;Q for exit ;P for print current events; C for create an example list: ")
+    while (operation != 'Q'):
+        while (operation not in ['A', 'D', 'U', 'S', 'C', 'P']):
+            operation = input("Type in again, invalid input")
+        if operation == "A":
+            argument = input("Type in an event: ")
+            argument_lis = argument.split(";")
+            print(len(argument_lis))
+            if len(argument_lis) == 4 and legal_checker(argument_lis[0], argument_lis[1]) != False:
+                events_lis = add_event(
+                    events_lis, argument_lis[0], argument_lis[1], argument_lis[2], argument_lis[3])
+                print(events_lis)
+        if operation == 'D':
+            argument = input("Type in the event you want to delete: ")
+            argument_lis = argument.split(";")
+            if len(argument_lis) == 2 and legal_checker(argument_lis[0], argument_lis[1]) != False:
+                events_lis = delet_event(
+                    events_lis, argument_lis[0], argument_lis[1])
+        if operation == 'U':
+            argument = input("Type in the event you want to change: ")
+            argument_lis = argument.split(";")
+            if len(argument_lis) == 6 and legal_checker(argument_lis[0], argument_lis[1]) != False:
+                events_lis = update_event(
+                    events_lis, argument_lis[0], argument_lis[1], argument_lis[2], argument_lis[3], argument_lis[4], argument_lis[5])
+        if operation == 'S':
+            argument = input("Type in the event you want to search: ")
+            argument_lis = argument.split(";")
+            if len(argument_lis) == 4 and legal_checker(argument_lis[0], argument_lis[1]) != False:
+                print(search_event(
+                    events_lis, argument_lis[0], argument_lis[1], argument_lis[2], argument_lis[3]))
+        if operation == 'P':
+            printer(events_lis)
+        if operation == 'C':
+            printer(test_list1)
+
+        operation = input(
+            "A for add events;D for delete a events;U for update a event;S for search events;Q for exit ;P for print current events; C for create an example list: ")
+
+
+main()
