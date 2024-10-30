@@ -4,9 +4,14 @@
 # Email ID: Zhohy042@mymail.unisa.edu.au
 # This is my own work as defined by
 # the university's academic misconduct policy.
+
+
+# delete an event from event list
 def delet_event(events_dir: list[dict], week: str, when: str) -> list[dict]:
     events_dir.remove(search_event(events_dir, week, when)[0])
     return events_dir
+
+# change the content of an event
 
 
 def update_event(events_dir: list[dict], originalweek: str, originalwhen: str, week: str | None = None, when: str | None = None, where: str | None = None, detail: str | None = None) -> list[dict]:
@@ -20,7 +25,6 @@ def update_event(events_dir: list[dict], originalweek: str, originalwhen: str, w
             target_event = search_event(
                 events_dir, originalweek, originalwhen)[0]
     deleted_events = delet_event(events_dir, originalweek, originalwhen)
-    print(target_event)
     if week != None:
         target_event['week'] = week
     if when != None:
@@ -29,8 +33,9 @@ def update_event(events_dir: list[dict], originalweek: str, originalwhen: str, w
         target_event['where'] = where
     if detail != None:
         target_event['detail'] = detail
-    print(target_event)
     return add_event(deleted_events, target_event['week'], target_event['when'], target_event['where'], target_event['detail'])
+
+# check if a current time is valid
 
 
 def legal_checker(week: str, when: str) -> bool:
@@ -38,26 +43,43 @@ def legal_checker(week: str, when: str) -> bool:
     legal_week = []
     for n in range(1, 8):
         legal_week.append("week"+str(n))
-    flag = False if week not in legal_week else flag
-    if flag == True:
+    if week not in legal_week:
+        return False
+    if len(when) == 5:
+        flag = False if when.count(
+            ":") != 1 or when.count(".") != 0 else flag
+        if flag == True:
+            flag = False if when[2] != ":" else flag
+        first_num = second_num = ""
+        if flag == True:
+            first_num = when.split(":")[0]
+            second_num = when.split(":")[1]
+            flag = False if (
+                first_num).isnumeric == False or second_num.isnumeric == False else flag
+        if flag == True:
+            flag = False if int(first_num) > 24 or int(first_num) < 0 or int(
+                second_num) > 60 or int(second_num) < 0 else flag
+    else:
         flag = False if when.count(",") != 1 or when.count(
             ":") != 2 or when.count(".") != 0 else flag
-    if flag == True:
-        flag = False if when[2] != ":" and when[5] != "," and when[8] != ":" else flag
-    first_num = second_num = third_num = fourth_num = ""
-    if flag == True:
-        first_num = when.split(",")[0].split(":")[0]
-        second_num = when.split(",")[0].split(":")[1]
-        third_num = when.split(",")[1].split(":")[0]
-        fourth_num = when.split(",")[1].split(":")[1]
-        flag = False if (
-            first_num).isnumeric == False or third_num.isnumeric == False or second_num.isnumeric == False or fourth_num.isnumeric == False else flag
+        if flag == True:
+            flag = False if when[2] != ":" and when[5] != "," and when[8] != ":" else flag
+        first_num = second_num = third_num = fourth_num = ""
+        if flag == True:
+            first_num = when.split(",")[0].split(":")[0]
+            second_num = when.split(",")[0].split(":")[1]
+            third_num = when.split(",")[1].split(":")[0]
+            fourth_num = when.split(",")[1].split(":")[1]
+            flag = False if (
+                first_num).isnumeric == False or third_num.isnumeric == False or second_num.isnumeric == False or fourth_num.isnumeric == False else flag
 
-    if flag == True:
-        flag = False if int(first_num) > 24 or int(first_num) < 0 or int(
-            second_num) > 60 or int(second_num) < 0 or int(fourth_num) > 60 or int(fourth_num) < 0 or (int(week[4])-1)*1440 + get_minits(when)[0]+get_minits(when)[1] > 10080 else flag
+        if flag == True:
+            flag = False if int(first_num) > 24 or int(first_num) < 0 or int(
+                second_num) > 60 or int(second_num) < 0 or int(fourth_num) > 60 or int(fourth_num) < 0 or (int(week[4])-1)*1440 + get_minits(when)[0]+get_minits(when)[1] > 10080 else flag
 
     return flag
+
+# add an event to event list. if the event trying to add exists or overlaps with others, the event will not be added successfully
 
 
 def add_event(events_dir: list[dict], week: str, when: str, where: str, detail: str | None = None) -> list[dict]:
@@ -104,16 +126,14 @@ def add_event(events_dir: list[dict], week: str, when: str, where: str, detail: 
                 is_overlap = True
         else:
             is_overlap = True
-    prepare_append = test(
+    prepare_append = sperate_event(
         int(input_list[0][4:5]), input_list[1], input_list[2], input_list[3])
     for y in prepare_append:
-        # print(y)
-        # for x in range(0, 4):
-        #    item.update({list(events_dir[0].keys())[
-        #                x]: list(y.values())[x]})
         events_dir.append(y)
 
     return events_dir
+
+# transform time from digital into string
 
 
 def get_time_str(time: int) -> str:
@@ -131,8 +151,10 @@ def get_time_str(time: int) -> str:
         mini_str = str(mini)
     return hour_str+":"+mini_str
 
+# if the duration of an event across days, this function can separate the event  into multiple events from different day then add them to event list separately
 
-def test(week: int, when: str, where: str, detail: str) -> list[dict]:
+
+def sperate_event(week: int, when: str, where: str, detail: str) -> list[dict]:
     tiemlist = when.split(",")[0].split(":")
     duration_list = when.split(",")[1].split(":")
     hour = int(tiemlist[0])
@@ -176,6 +198,8 @@ def test(week: int, when: str, where: str, detail: str) -> list[dict]:
                          'where': where, 'detail': detail})
     return item_list
 
+# compute the number of mints  between 0 to 1440
+
 
 def get_minits(when: str) -> list[int]:
     tiemlist = when.split(",")[0].split(":")
@@ -186,19 +210,43 @@ def get_minits(when: str) -> list[int]:
     duration = int(duration_list[0])*60+int(duration_list[1])
     return [minits, duration]
 
+# search events from existing event list
 
-def search_event(events_dir: list[dict], week: str, when: str | None = None, where: str | None = None, detail: str | None = None) -> list:
+
+def search_event(events_dir: list[dict], week: str | None, when: str | None = None, where: str | None = None, detail: str | None = None) -> list:
 
     def f(events: list[dict], x: str): return [
         n for n in events if x in n.values()]
-    argues_list = [n for n in [week, where, detail] if n != None]
-    for n in argues_list:
-        events_dir = f(events_dir, n)
-# add overlap checking logic here
-    if when != None:
-        events_dir = [i for i in events_dir if i['when'].split(',')[
-            0] == when]
+    if when == None:
+        argues_list = [n for n in [week, where, detail] if n != None]
+        for n in argues_list:
+            events_dir = f(events_dir, n)
+    elif week == None:
+        if legal_checker("week1", when) != False:
+            argues_list = [n for n in [where, detail] if n != None]
+            for n in argues_list:
+                events_dir = f(events_dir, n)
+                # add overlap checking logic here
+            if when != None:
+                events_dir = [i for i in events_dir if i['when'].split(',')[
+                    0] == when]
+        else:
+            return []
+    else:
+        if legal_checker(week, when) != False:
+            argues_list = [n for n in [week, where, detail] if n != None]
+            for n in argues_list:
+                events_dir = f(events_dir, n)
+                # add overlap checking logic here
+            if when != None:
+                events_dir = [i for i in events_dir if i['when'].split(',')[
+                    0] == when]
+        else:
+            return []
+
     return events_dir
+
+# get context of a whole day  that will be printed out on screen
 
 
 def get_information(week: list[dict], column: int, hiden: bool) -> list[dict]:
@@ -252,6 +300,8 @@ def quick_sort(lis: list[int]) -> list:
     right = [n for n in lis[:-1] if n > pivot]
     return quick_sort(left) + [pivot] + quick_sort(right)
 
+# if two events have a too long gap for time, use arrows to indicate the time of flow
+
 
 def print_arrow(time: int, gap: int) -> None:
     for n in range(1, time):
@@ -274,6 +324,8 @@ def print_arrow(time: int, gap: int) -> None:
         print("{0:>8}".format("\\/   "), end="")
         print(" "*gap, end="")
     print()
+
+# print out every line of events to form a complete timetable.
 
 
 def printer(events_dir: list[dict]) -> None:
@@ -378,6 +430,8 @@ def printer(events_dir: list[dict]) -> None:
     print("-"*140)
     print(all_print_data)
 
+# get one line from the context of whole day that will be employed by printer function
+
 
 def get_text(weekly_event: list[dict], update_time: int) -> list:
     if (update_time < get_minits(weekly_event[0][0])[0]):
@@ -398,6 +452,7 @@ def get_text(weekly_event: list[dict], update_time: int) -> list:
         return [weekly_event, "="*18]
 
 
+# some event data for test
 test_dir1 = {'week': 'week1', 'when': '11:29,01:05',
              'where': 'unisa in Mawson Lakes campus', 'detail': 'study geography'}
 
@@ -426,7 +481,7 @@ test_dir7 = {'week': 'week7', 'when': '11:59,00:20',
 test_list = [test_dir1, test_dir2, test_dir3,
              test_dir4, test_dir5, test_dir6, test_dir7, test_dir8, test_dir9, test_dir10, test_dir11, test_dir12]
 # print(search_event(test_list, "week1", "11:29"))
-test_list1 = [test_dir1]
+test_list1 = [test_dir1, test_dir2, test_dir3]
 test_dir13 = {'week': 'week3', 'when': '01:59',
               'where': 'Home', 'detail': 'Rush B'}
 
@@ -442,17 +497,19 @@ test_dir13 = {'week': 'week3', 'when': '01:59',
 
 # printer(add_event(test_list1, "week1", "11:49,00:35", "Home", "Rush B"))
 # print(legal_checker("week1", "20:30,20:10"))
+
+
+# the entrance of the timetable program
 def main() -> None:
     events_lis = []
     operation = input(
         "A for add events;D for delete a events;U for update a event;S for search events;Q for exit ;P for print current events; C for create an example list: ")
     while (operation != 'Q'):
         while (operation not in ['A', 'D', 'U', 'S', 'C', 'P']):
-            operation = input("Type in again, invalid input")
+            operation = input("Type in again, invalid input:  ")
         if operation == "A":
             argument = input("Type in an event: ")
             argument_lis = argument.split(";")
-            print(len(argument_lis))
             if len(argument_lis) == 4 and legal_checker(argument_lis[0], argument_lis[1]) != False:
                 events_lis = add_event(
                     events_lis, argument_lis[0], argument_lis[1], argument_lis[2], argument_lis[3])
@@ -467,16 +524,58 @@ def main() -> None:
             argument = input("Type in the event you want to change: ")
             argument_lis = argument.split(";")
             if len(argument_lis) == 6 and legal_checker(argument_lis[0], argument_lis[1]) != False:
+                if argument_lis[2] == "-":
+                    week = None
+                else:
+                    week = argument_lis[2]
+                if argument_lis[3] == "-":
+                    when = None
+                else:
+                    when = argument_lis[3]
+                if argument_lis[4] == '-':
+                    where = None
+                else:
+                    where = argument_lis[4]
+                if argument_lis[5] == '-':
+                    detail = None
+                else:
+                    detail = argument_lis[5]
                 events_lis = update_event(
-                    events_lis, argument_lis[0], argument_lis[1], argument_lis[2], argument_lis[3], argument_lis[4], argument_lis[5])
+                    events_lis, argument_lis[0], argument_lis[1], week, when, where, detail)
+            print(events_lis)
         if operation == 'S':
             argument = input("Type in the event you want to search: ")
             argument_lis = argument.split(";")
-            if len(argument_lis) == 4 and legal_checker(argument_lis[0], argument_lis[1]) != False:
-                print(search_event(
-                    events_lis, argument_lis[0], argument_lis[1], argument_lis[2], argument_lis[3]))
+            if len(argument_lis) == 4:
+                if argument_lis[0] == "-":
+                    week = None
+                else:
+                    week = argument_lis[0]
+                if argument_lis[1] == "-":
+                    when = None
+                else:
+                    when = argument_lis[1]
+                if argument_lis[2] == '-':
+                    where = None
+                else:
+                    where = argument_lis[2]
+                if argument_lis[3] == '-':
+                    detail = None
+                else:
+                    detail = argument_lis[3]
+                if week != None and when == None:
+                    if legal_checker(argument_lis[0], "12:00") != False:
+                        print(search_event(
+                            events_lis, week, when, where, detail))
+                elif week == None and when != None:
+                    if legal_checker("week1", argument_lis[1]) != False:
+                        print(search_event(events_lis, week, when, where, detail))
+                else:
+                    print(search_event(events_lis, week, when, where, detail))
+
         if operation == 'P':
-            printer(events_lis)
+            if len(events_lis) != 0:
+                printer(events_lis)
         if operation == 'C':
             printer(test_list1)
 
